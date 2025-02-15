@@ -38,7 +38,26 @@ clock = pygame.time.Clock()
 
 """Creating player sprite"""
 class Player(pygame.sprite.Sprite):
+    """
+    The Player class is used to store all methods unique to the player.
 
+    This is a child class of the pygame Sprite class.
+
+    Attributes:
+        image (Surface): Image displayed as the current player sprite
+        rect (Rect): pygame Rect object from the input image
+        rect.centerx (Float): Float indicating the x coordinate of the center x coordinate of the image
+        rect.bottom (Float): Float indicating the y coordinate at the bottom of the image
+
+        idle (bool): Boolean value indicating that the player is in "idle" status
+        idle_sprite_1 (bool): Boolean value indicating that the player's image is idle_sprite_1.
+
+        idle_animation_speed (int): Determines the milliseconds between each sprite switch while the character is in idle
+        last_update (int): Integer value serving as a timestamp determining the last time that the player's idle sprite was last updated. 
+
+        attack_animation_speed (int): Determines the milliseconds between each sprite switch while the character is attacking
+        last_attack (int): Integer value serving as a timestamp determining the last time that the player's attack sprite was last updated.
+    """
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
 
@@ -56,9 +75,16 @@ class Player(pygame.sprite.Sprite):
         self.attack_animation_speed = 200
         self.last_attack = pygame.time.get_ticks()
 
-        self.count = 0
-
     def update(self):
+        """
+        Update method which is called whenever the sprite group is updated.
+        
+        Args:
+            None
+
+        Returns:
+            None
+        """
         curr_time = pygame.time.get_ticks()
         
         if self.idle:
@@ -131,12 +157,6 @@ class ArrowBW(Arrow):
         self.image = self.hit
         self.arrow_hit = True
         self.last_arrow_hit = curr_time
-
-    def fail(self):
-        curr_time = pygame.time.get_ticks()
-        self.image = self.miss
-        self.arrow_miss = True
-        self.last_arrow_miss = curr_time
 
         
 class GameMaster:
@@ -252,25 +272,21 @@ while running:
         if arrow.rect.bottom <= HEIGHT/2:
             if arrow in collisions:
                 arrow.kill()
-                right_arrow_bw.fail()
     
     for arrow in left_arrow_sprites:
         if arrow.rect.bottom <= HEIGHT/2:
             if arrow in collisions:
                 arrow.kill()
-                left_arrow_bw.fail()
     
     for arrow in up_arrow_sprites:
         if arrow.rect.bottom <= HEIGHT/2:
             if arrow in collisions:
                 arrow.kill()
-                up_arrow_bw.fail()
     
     for arrow in down_arrow_sprites:
         if arrow.rect.bottom <= HEIGHT/2:
             if arrow in collisions:
                 arrow.kill()
-                down_arrow_bw.fail()
     
     # choosing arrows 
     arrow = game_master.choose_next_arrow()
