@@ -24,4 +24,4 @@ Hi Dylan, to help you better understand the code, I need you to answer the quest
 
 7.1 Why did I create sprite groups for each arrow type like right_arrow_sprites, left_arrow_sprite, etc instead of storing all of them under arrow_sprites? 
 
-8. I wish to see your commitment to this project, as such, I would like you to study the code in your own time and try to implement an "enemy" sprite at the side. Discuss with me how this enemy sprite should look and what functions he should have. 
+8. I wish to see your commitment to this project, as such, I would like you to study the code in your own time and try to implement a "miss" for the BW arrow. Discuss with me how this sprite should be implemented. 
