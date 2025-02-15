@@ -2,7 +2,6 @@ import pygame
 import random
 from load_img import LoadImage
 
-
 WIDTH = 480
 HEIGHT = 600
 FPS = 60
@@ -100,21 +99,44 @@ class Arrow(pygame.sprite.Sprite):
     
     def update(self):
         self.rect.y -= self.speedy
-
-        
         
 
 class ArrowBW(Arrow):
     def __init__(self, centerx = WIDTH / 4, image = images.up_arrow_bw, hit_image = images.up_arrow_hit, miss_image = images.down_arrow_miss):
         super().__init__(centerx, image)
         self.idle = pygame.transform.scale(image, (50, 50))
-        self.hit = pygame.transform.scale(hit_image, (50, 50))
-        self.miss = pygame.transform.scale(miss_image, (50, 50))
+        self.hit = pygame.transform.scale(hit_image, (52, 52))
+        self.miss = pygame.transform.scale(miss_image, (52, 52))
         self.rect.bottom = HEIGHT/2
         self.speed = 0
 
         self.arrow_hit = False
         self.last_arrow_hit = pygame.time.get_ticks()
+
+        self.arrow_miss = False
+        self.last_arrow_miss = pygame.time.get_ticks()
+    
+    def update(self):
+        curr_time = pygame.time.get_ticks()
+        if self.arrow_hit and curr_time - self.last_arrow_hit > 300:
+            self.image = self.idle
+            self.arrow_hit = False
+        
+        if self.arrow_miss and curr_time-self.last_arrow_miss > 300:
+            self.image = self.idle
+            self.arrow_miss= False
+    
+    def score(self):
+        curr_time = pygame.time.get_ticks()
+        self.image = self.hit
+        self.arrow_hit = True
+        self.last_arrow_hit = curr_time
+
+    def fail(self):
+        curr_time = pygame.time.get_ticks()
+        self.image = self.miss
+        self.arrow_miss = True
+        self.last_arrow_miss = curr_time
 
         
 class GameMaster:
@@ -148,10 +170,14 @@ arrow_sprites.add(left_arrow_sprites, right_arrow_sprites, up_arrow_sprites, dow
 
 game_master = GameMaster()
 
-left_arrow_bw = ArrowBW(centerx = arrow_dict[images.left_arrow], image = images.left_arrow_bw)
-right_arrow_bw = ArrowBW(centerx = arrow_dict[images.right_arrow], image = images.right_arrow_bw)
-up_arrow_bw = ArrowBW(centerx = arrow_dict[images.up_arrow], image = images.up_arrow_bw, hit_image=images.up_arrow_hit, miss_image=images.down_arrow_hit)
+left_arrow_bw = ArrowBW(centerx = arrow_dict[images.left_arrow], image = images.left_arrow_bw, hit_image=images.left_arrow_hit, miss_image=images.left_arrow_miss)
+
+right_arrow_bw = ArrowBW(centerx = arrow_dict[images.right_arrow], image = images.right_arrow_bw,hit_image=images.right_arrow_hit, miss_image=images.right_arrow_miss)
+
+up_arrow_bw = ArrowBW(centerx = arrow_dict[images.up_arrow], image = images.up_arrow_bw, hit_image=images.up_arrow_hit, miss_image=images.up_arrow_miss)
+
 down_arrow_bw = ArrowBW(centerx = arrow_dict[images.down_arrow], image = images.down_arrow_bw, hit_image=images.down_arrow_hit, miss_image=images.down_arrow_miss)
+
 bw_arrows = [left_arrow_bw, right_arrow_bw, up_arrow_bw, down_arrow_bw]
 
 bw_arrow_sprites = pygame.sprite.Group(bw_arrows)
@@ -163,57 +189,93 @@ while running:
     
     """Keep loop running at the right speed"""
     clock.tick(FPS)
-        
+    
+    collisions = pygame.sprite.groupcollide(arrow_sprites, bw_arrow_sprites, False, False)
+
     """Process input (events)"""
     for event in pygame.event.get():
-            """Check for closing window"""
-            if event.type == pygame.QUIT:
-                running = False
-                
-            if event.type == pygame.KEYDOWN:
-                collisions = pygame.sprite.groupcollide(arrow_sprites, bw_arrow_sprites, False, False)
-                
-                if event.key == pygame.K_1:
-                    game_master.start = True
-                    player.idle = False
+        """Check for closing window"""
+        if event.type == pygame.QUIT:
+            running = False
+            
+        if event.type == pygame.KEYDOWN:
+            
+            if event.key == pygame.K_1:
+                game_master.start = True
+                player.idle = False
 
-                if event.key == pygame.K_2:
-                    game_master.start = False
+            if event.key == pygame.K_2:
+                game_master.start = False
 
-                if event.key == pygame.K_UP:
-                    for arrow in up_arrow_sprites.sprites():
-                        if arrow in collisions:
-                            player.attack()
-                            arrow.kill()
+            if event.key == pygame.K_UP:
+                player.attack()
+                for arrow in up_arrow_sprites.sprites():
+                    if arrow in collisions:
+                        up_arrow_bw.score()
+                        arrow.kill()
+                        break
+                    else:
+                        up_arrow_bw.fail()
 
-                if event.key == pygame.K_DOWN:
-                    for arrow in down_arrow_sprites.sprites():
-                        if arrow in collisions:
-                            bw_arrow = collisions[arrow][0]
-                            bw_arrow.image = bw_arrow.hit
-                            player.attack()
-                            arrow.kill()
+            if event.key == pygame.K_DOWN:
+                player.attack()
+                for arrow in down_arrow_sprites.sprites():
+                    if arrow in collisions:
+                        down_arrow_bw.score()
+                        arrow.kill()
+                        break
+                    else:
+                        down_arrow_bw.fail()
 
-                if event.key == pygame.K_LEFT:
-                    for arrow in left_arrow_sprites.sprites():
-                        if arrow in collisions:
-                            player.attack()
-                            arrow.kill()
+            if event.key == pygame.K_LEFT:
+                player.attack()
+                for arrow in left_arrow_sprites.sprites():
+                    if arrow in collisions:
+                        left_arrow_bw.score()
+                        arrow.kill()
+                        break
+                    else:
+                        left_arrow_bw.fail()
 
-                if event.key == pygame.K_RIGHT:
-                    for arrow in right_arrow_sprites.sprites():
-                        if arrow in collisions:
-                            player.attack()
-                            arrow.kill()
+            if event.key == pygame.K_RIGHT:
+                player.attack()
+                for arrow in right_arrow_sprites.sprites():
+                    if arrow in collisions:
+                        right_arrow_bw.score()
+                        arrow.kill()
+                        break
+                    else:
+                        right_arrow_bw.fail()
 
-    for arrow in arrow_sprites.sprites():
+    # Case where a right arrow has aligned completely with the right arrow bw and has not been pressed by the player. 
+    for arrow in right_arrow_sprites:
         if arrow.rect.bottom <= HEIGHT/2:
-            # arrow.rect.top = HEIGHT
-            arrow.kill()
+            if arrow in collisions:
+                arrow.kill()
+                right_arrow_bw.fail()
     
-    # choosing arrows
+    for arrow in left_arrow_sprites:
+        if arrow.rect.bottom <= HEIGHT/2:
+            if arrow in collisions:
+                arrow.kill()
+                left_arrow_bw.fail()
+    
+    for arrow in up_arrow_sprites:
+        if arrow.rect.bottom <= HEIGHT/2:
+            if arrow in collisions:
+                arrow.kill()
+                up_arrow_bw.fail()
+    
+    for arrow in down_arrow_sprites:
+        if arrow.rect.bottom <= HEIGHT/2:
+            if arrow in collisions:
+                arrow.kill()
+                down_arrow_bw.fail()
+    
+    # choosing arrows 
     arrow = game_master.choose_next_arrow()
-
+    
+    # adding arrow to the respective sprite groups
     if arrow != None:
         if arrow.arrow_dir == images.up_arrow:
             up_arrow_sprites.add(arrow)
@@ -228,6 +290,7 @@ while running:
     """Update"""
     all_sprites.update()
     arrow_sprites.update()
+    bw_arrow_sprites.update()
 
     """Drawing/Rendering"""
     screen.fill(BLACK)
