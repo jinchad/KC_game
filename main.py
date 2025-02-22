@@ -6,6 +6,9 @@ WIDTH = 480
 HEIGHT = 600
 FPS = 60
 
+MAX_HP_BAR_LENGTH = WIDTH*2/3
+
+
 """Define colors as constants"""
 WHITE = (255,255,255)
 BLACK = (0,0,0)
@@ -13,6 +16,7 @@ RED = (255,0,0)
 GREEN = (0,255,0)
 BLUE = (0,0,255)
 YELLOW = (255,255,0)
+
 
 """Initialise pygame and create window"""
 pygame.init()
@@ -139,6 +143,9 @@ class Player(pygame.sprite.Sprite):
 
         # updating the player's last attack time stamp to the current time stamp. This is used to determine when the player's sprite should change.
         self.last_attack = pygame.time.get_ticks()
+
+    def lose(self):
+        self.image = pygame.transform.scale(images.player_lose, (125, 62))
 
 class Arrow(pygame.sprite.Sprite):
     """
@@ -274,6 +281,12 @@ class ArrowBW(Arrow):
         # updating the last arrow hit to current timestamp for future reference
         self.last_arrow_hit = curr_time
 
+    def fail(self):
+        curr_time = pygame.time.get_ticks()
+        self.image = self.miss
+        self.arrow_miss = True
+        self.last_arrow_miss = curr_time
+
         
 class GameMaster:
     """
@@ -283,7 +296,6 @@ class GameMaster:
         last_arrow (int): stores the time stamp of the last arrow that has been sent out
         arrow_intervals (int): determines the time difference between each arrow in milliseconds
         arrow_choices (List[Surface]): stores the four possible arrow choices that are pygame Surfaces
-
         start (bool): determines if the game has started, which determines if the arrows should start sending out
     """
     def __init__(self):
@@ -324,15 +336,128 @@ class GameMaster:
         else:
             # returns none if it's not yet time to send out the next arrow
             return None
+        
+class HealthBar(pygame.sprite.Sprite):
+    """
+    This class creates a HealthBar object for the player. 
+    
+    This healthbar is the red healthbar in the game, representing the lost hp for the player. The size of this healthbar remains constant throughout the game and only the green healthbar, which is placed on top of this healthbar, will have its size reduced.
+
+    This is also a child class of the pygame Sprite class.
+
+    Args:
+        width (int): optional argument for the width of the health bar
+        height(int): optional argument for the height of the health bar
+        color (str): optional argument for colour of the health bar representing the lost player hp
+
+    Attributes:
+        width (int): width of the health bar
+        height (int): height of the health bar
+        color (int): color of the health bar
+        image (Surface): pygame Surface object creating the rectangular healthbar
+        rect (Rect): pygame Rect object of the healthbar
+        rect.centerx (float): the center x coordinate of the healthbar
+        rect.bottom (float): the bottom y coordinate of the healthbar
+
+    """
+    def __init__(self, width: int = MAX_HP_BAR_LENGTH, height: int = HEIGHT/30, color: str = RED):
+        pygame.sprite.Sprite.__init__(self)
+        self.width = width
+        self.height = height
+        self.color = color
+        self.image = pygame.Surface((self.width, self.height))
+        self.image.fill(self.color)
+        self.rect = self.image.get_rect()
+        self.rect.centerx = WIDTH/2
+        self.rect.bottom = HEIGHT*2/5
+
+class GreenHealthBar(HealthBar):
+    """
+    This class creates the green health bar, representing the remaining hp of the player.
+
+    A player losing hp is represented by reducing the width of this healthbar. 
+    
+    This is a child class of the HealthBar class.
+
+    Args:
+        width (int): optional argument for the width of the health bar
+        height(int): optional argument for the height of the health bar
+        color (str): optional argument for colour of the health bar representing the lost player hp
+
+    Attributes:
+        rect.centerx (float): the center x coordinate of the healthbar
+        percentage_loss (int): integer representing the amount of hp gained/loss each increment/decrement. The hp gained/lost is inversely proportional to the value here
+
+        Kindly refer to attributes documented in the HealthBar class for other attributes pertaining tot his class
+    """
+    def __init__(self, width = MAX_HP_BAR_LENGTH/2, height = HEIGHT / 30, color = GREEN):
+        super().__init__(width, height, color)
+        self.rect.centerx = WIDTH/2 - width/2
+        self.percentage_loss = 40
+    
+    
+    def lose_health(self):
+        """
+        This function is used when a player loses hp.
+
+        The scale of healthbar reduction is dependent on the percentage loss attribute.
+
+        Args:
+            None
+
+        Return:
+            None        
+        """
+        # reducing the width of the health bar
+        self.width -= MAX_HP_BAR_LENGTH/2/self.percentage_loss
+
+        # taking the maximum between 0 and the width of the health bar. This ensures that the width of the health bar does not drop below 0. 
+        self.width = max(self.width, 0)
+
+        # recreating the healthbar as a pygame Surface 
+        self.image = pygame.Surface((self.width, self.height))
+
+        # filling the pygame Surface with the color
+        self.image.fill(self.color)
+
+    def gain_health(self):
+        """
+        This function is used when a player gains hp.
+
+        The scale of healthbar gained is dependent on the percentage loss attribute.
+
+        Args:
+            None
+
+        Return:
+            None        
+        """
+        # increasing the width of the health bar
+        self.width += MAX_HP_BAR_LENGTH/2/self.percentage_loss
+
+        # taking the minimum between the new width of the health bar and the maximum possible length of the healthbar
+        self.width = min(self.width, MAX_HP_BAR_LENGTH)
+
+        # recreating the healthbar as a pygame Surface 
+        self.image = pygame.Surface((self.width, self.height))
+
+        # filling the pygame Surface with the color
+        self.image.fill(self.color)
 
 all_sprites = pygame.sprite.Group()
 player = Player()
+healthbar = HealthBar()
+player_healthbar = GreenHealthBar()
+
 all_sprites.add(player)
+all_sprites.add(healthbar)
+all_sprites.add(player_healthbar)
 
 left_arrow_sprites = pygame.sprite.Group()
 right_arrow_sprites = pygame.sprite.Group()
 up_arrow_sprites = pygame.sprite.Group()
 down_arrow_sprites = pygame.sprite.Group()
+
 
 arrow_sprites = pygame.sprite.Group()
 arrow_sprites.add(left_arrow_sprites, right_arrow_sprites, up_arrow_sprites, down_arrow_sprites)
@@ -354,6 +479,7 @@ for bw_arrow in bw_arrows:
     bw_arrow_sprites.add(bw_arrow)
 
 running = True
+game_over = False
 while running:
     
     """Keep loop running at the right speed"""
@@ -378,64 +504,88 @@ while running:
 
             if event.key == pygame.K_UP:
                 player.attack()
+                up_fail = True
                 for arrow in up_arrow_sprites.sprites():
                     if arrow in collisions:
                         up_arrow_bw.score()
                         arrow.kill()
+                        player_healthbar.gain_health()
+                        up_fail = False
                         break
-                    else:
-                        up_arrow_bw.fail()
+                if up_fail:
+                    up_arrow_bw.fail()
+                    player_healthbar.lose_health()
 
             if event.key == pygame.K_DOWN:
                 player.attack()
+                down_fail = True
                 for arrow in down_arrow_sprites.sprites():
                     if arrow in collisions:
                         down_arrow_bw.score()
                         arrow.kill()
+                        player_healthbar.gain_health()
+                        down_fail = False
                         break
-                    else:
-                        down_arrow_bw.fail()
+                if down_fail:
+                    down_arrow_bw.fail()
+                    player_healthbar.lose_health()
 
             if event.key == pygame.K_LEFT:
                 player.attack()
+                left_fail = True
                 for arrow in left_arrow_sprites.sprites():
                     if arrow in collisions:
                         left_arrow_bw.score()
                         arrow.kill()
+                        player_healthbar.gain_health()
+                        left_fail = False
                         break
-                    else:
-                        left_arrow_bw.fail()
+                if left_fail:
+                    left_arrow_bw.fail()
+                    player_healthbar.lose_health()
 
             if event.key == pygame.K_RIGHT:
                 player.attack()
+                right_fail = True
                 for arrow in right_arrow_sprites.sprites():
                     if arrow in collisions:
                         right_arrow_bw.score()
                         arrow.kill()
+                        player_healthbar.gain_health()
+                        right_fail = False
                         break
-                    else:
-                        right_arrow_bw.fail()
+                if right_fail:
+                    right_arrow_bw.fail()
+                    player_healthbar.lose_health()
 
     # Case where a right arrow has aligned completely with the right arrow bw and has not been pressed by the player. 
     for arrow in right_arrow_sprites:
         if arrow.rect.bottom <= HEIGHT/2:
             if arrow in collisions:
                 arrow.kill()
+                right_arrow_bw.fail()
+                player_healthbar.lose_health()
     
     for arrow in left_arrow_sprites:
         if arrow.rect.bottom <= HEIGHT/2:
             if arrow in collisions:
                 arrow.kill()
+                left_arrow_bw.fail()
+                player_healthbar.lose_health()
     
     for arrow in up_arrow_sprites:
         if arrow.rect.bottom <= HEIGHT/2:
             if arrow in collisions:
                 arrow.kill()
+                up_arrow_bw.fail()
+                player_healthbar.lose_health()
     
     for arrow in down_arrow_sprites:
         if arrow.rect.bottom <= HEIGHT/2:
             if arrow in collisions:
                 arrow.kill()
+                down_arrow_bw.fail()
+                player_healthbar.lose_health()
     
     # choosing arrows 
     arrow = game_master.choose_next_arrow()
@@ -451,10 +601,15 @@ while running:
         else:
             right_arrow_sprites.add(arrow)
         arrow_sprites.add(arrow)
+    
+    if player_healthbar.width <= 0:
+        player.lose()
+        game_over = True
 
     """Update"""
-    all_sprites.update()
-    arrow_sprites.update()
+    if game_over == False:
+        all_sprites.update()
+        arrow_sprites.update()
     bw_arrow_sprites.update()
 
     """Drawing/Rendering"""
@@ -463,9 +618,16 @@ while running:
     #screen.blit(background, background_rect)
 
     """Blit the sprites images"""
+    
     all_sprites.draw(screen)
     bw_arrow_sprites.draw(screen)
     arrow_sprites.draw(screen)
+
+    if game_over:
+        font = pygame.font.SysFont(None, 72)
+        text_surface = font.render("GAME OVER", True, RED)
+        text_rect = text_surface.get_rect(center=(WIDTH / 2, HEIGHT / 4))
+        screen.blit(text_surface, text_rect)
     pygame.display.flip()
 
 """Close the game"""
