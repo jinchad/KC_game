@@ -56,6 +56,12 @@ class Player(pygame.sprite.Sprite):
         self.attack_animation_speed = 200
         self.last_attack = pygame.time.get_ticks()
 
+        self.sprite_idle_1 = images.player_idle_1
+        self.sprite_idle_2 = images.player_idle_2
+        self.sprite_attack_1 = images.player_attack_1
+        self.sprite_attack_2 = images.player_attack_2
+        self.sprite_lose = images.player_lose
+
     def update(self):
         """
         Update method which is called whenever the sprite group is updated.
@@ -75,13 +81,13 @@ class Player(pygame.sprite.Sprite):
                 # if statement checking if the user's sprite is idle_sprite_1
                 if self.idle_sprite_1:
                     # setting player image to idle sprite 2
-                    self.image = pygame.transform.scale(images.player_idle_2, (100, 100))
+                    self.image = pygame.transform.scale(self.sprite_idle_2, (100, 100))
 
                     # setting idle_sprite_1 to False. The next switch will be to idle sprite 1
                     self.idle_sprite_1 = False
                 else:
                     # setting player image to idle sprite 1
-                    self.image = pygame.transform.scale(images.player_idle_1, (100, 100))
+                    self.image = pygame.transform.scale(self.sprite_idle_1, (100, 100))
 
                     # setting idle_sprite_1 to True. The next switch will be to idle sprite 2
                     self.idle_sprite_1 = True
@@ -94,7 +100,7 @@ class Player(pygame.sprite.Sprite):
             if curr_time - self.last_attack > self.attack_animation_speed:
 
                 # setting the player image to player_attack_1
-                self.image = pygame.transform.scale(images.player_attack_1, (100, 100))
+                self.image = pygame.transform.scale(self.sprite_attack_1, (100, 100))
             
             # if statment checking if the time difference between the current time stamp and the last attack time stamp exceeds 3000 ms
             if curr_time - self.last_attack > 3000:
@@ -116,11 +122,24 @@ class Player(pygame.sprite.Sprite):
         self.idle = False
 
         # Setting the player's image to player_attack_2
-        self.image = pygame.transform.scale(images.player_attack_2, (100, 100))
+        self.image = pygame.transform.scale(self.sprite_attack_2, (100, 100))
 
         # updating the player's last attack time stamp to the current time stamp. This is used to determine when the player's sprite should change.
         self.last_attack = pygame.time.get_ticks()
 
     def lose(self):
-        self.image = pygame.transform.scale(images.player_lose, (125, 62))
+        self.image = pygame.transform.scale(self.sprite_lose, (125, 62))
 
+class Enemy(Player):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.transform.scale(images.enemy_idle_1, (100, 100))
+
+        self.rect.centerx = WIDTH*3/4 	
+        self.rect.bottom = HEIGHT/4
+
+        self.sprite_idle_1 = images.enemy_idle_1
+        self.sprite_idle_2 = images.enemy_idle_2
+        self.sprite_attack_1 = images.enemy_attack_1
+        self.sprite_attack_2 = images.enemy_attack_2
+        self.sprite_lose = images.enemy_lose

@@ -14,6 +14,7 @@ HEIGHT = int(os.getenv("HEIGHT", 600))
 MAX_HP_BAR_LENGTH = WIDTH*2/3
 RED = (255,0,0)
 GREEN = (0,255,0)
+GAME_DIFFICULTY = os.getenv("GAME_DIFFICULTY", "easy")
 
 """Loading in images"""
 images = LoadImage()
@@ -75,7 +76,19 @@ class GreenHealthBar(HealthBar):
     def __init__(self, width = MAX_HP_BAR_LENGTH/2, height = HEIGHT / 30, color = GREEN):
         super().__init__(width, height, color)
         self.rect.centerx = WIDTH/2 - width/2
-        self.percentage_loss = 40
+        match GAME_DIFFICULTY:
+            case "easy":
+                self.percentage_loss = 40
+                self.percentage_gain = 20
+            case "medium":
+                self.percentage_loss = 30
+                self.percentage_gain = 25
+            case "hard":
+                self.percentage_loss = 20
+                self.percentage_gain = 30
+            case "extreme":
+                self.percentage_loss = 15
+                self.percentage_gain = 40
     
     
     def lose_health(self):
@@ -115,7 +128,7 @@ class GreenHealthBar(HealthBar):
             None        
         """
         # increasing the width of the health bar
-        self.width += MAX_HP_BAR_LENGTH/2/self.percentage_loss
+        self.width += MAX_HP_BAR_LENGTH/2/self.percentage_gain
 
         # taking the minimum between the new width of the health bar and the maximum possible length of the healthbar
         self.width = min(self.width, MAX_HP_BAR_LENGTH)

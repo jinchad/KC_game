@@ -35,7 +35,7 @@ class Arrow(pygame.sprite.Sprite):
         arrow_dir (Surface): Pygame Surface determining the direction of the arrow. This is used to determine what to do with the sprite in the game. 
     """
 
-    def __init__(self, centerx = WIDTH/4, image = images.up_arrow):
+    def __init__(self, centerx = WIDTH/4, image = images.up_arrow, arrow_dir: str = "up"):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.transform.scale(image, (50, 50))
 
@@ -44,7 +44,7 @@ class Arrow(pygame.sprite.Sprite):
         self.rect.bottom = HEIGHT - 10
         self.speedy = 3
 
-        self.arrow_dir = image
+        self.arrow_dir = arrow_dir
     
     def update(self):
         """
@@ -58,6 +58,10 @@ class Arrow(pygame.sprite.Sprite):
         """
         # Updating the y coordinate of the image with the speed of the arrow
         self.rect.y -= self.speedy
+
+        if self.rect.bottom < HEIGHT/2-self.speedy:
+            self.kill()
+
         
 
 class ArrowBW(Arrow):

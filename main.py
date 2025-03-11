@@ -23,7 +23,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 from agents.arrows import ArrowBW
 from agents.gamemaster import GameMaster
 from agents.healthbar import HealthBar, GreenHealthBar
-from agents.player import Player
+from agents.player import Player, Enemy
 
 """Loading in images"""
 images = LoadImage()
@@ -39,14 +39,25 @@ arrow_dict = {
 
 """Set speed of the game"""
 clock = pygame.time.Clock()
-       
+
+# variable storing the player's turn
+player_turn = False
+
+# variable storing the enemy turn
+enemy_turn = False
+
+# number of ticks before next character's turn
+turn_break = 5000
 
 if __name__ == "__main__":
-    # creating a pygame sprite Group that will hold the base sprites for the game
+    # creating a pygame sprite Group that will contain the healthbar sprites, player and enemy sprites for the game
     base_game_sprites = pygame.sprite.Group()
 
     # creating the player object
     player = Player()
+
+    # creating the enemy object
+    enemy = Enemy()
 
     # creating the "lost" healthbar object
     healthbar = HealthBar()
@@ -58,19 +69,42 @@ if __name__ == "__main__":
     base_game_sprites.add(player)
     base_game_sprites.add(healthbar)
     base_game_sprites.add(player_healthbar)
+    base_game_sprites.add(enemy)
 
     # creating respective sprite groups for all 4 directions. These groups are necessary to control their responses to certain collisions in later parts
-    left_arrow_sprites = pygame.sprite.Group()
-    right_arrow_sprites = pygame.sprite.Group()
-    up_arrow_sprites = pygame.sprite.Group()
-    down_arrow_sprites = pygame.sprite.Group()
+    player_left_arrow_sprites = pygame.sprite.Group()
+    player_right_arrow_sprites = pygame.sprite.Group()
+    player_up_arrow_sprites = pygame.sprite.Group()
+    player_down_arrow_sprites = pygame.sprite.Group()
 
     # creating the arrow_sprites sprite group and adding all 4 arrow sprite groups. This group is used for easier control of all arrow sprites.
-    arrow_sprites = pygame.sprite.Group()
-    arrow_sprites.add(left_arrow_sprites, right_arrow_sprites, up_arrow_sprites, down_arrow_sprites)
+    player_arrow_sprites = pygame.sprite.Group()
+    player_arrow_sprites.add(
+        player_left_arrow_sprites, 
+        player_right_arrow_sprites, 
+        player_up_arrow_sprites, 
+        player_down_arrow_sprites
+        )
+    
+    # creating respective sprite groups for all 4 directions. These groups are necessary to control their responses to certain collisions in later parts
+    enemy_left_arrow_sprites = pygame.sprite.Group()
+    enemy_right_arrow_sprites = pygame.sprite.Group()
+    enemy_up_arrow_sprites = pygame.sprite.Group()
+    enemy_down_arrow_sprites = pygame.sprite.Group()
 
-    # creating the GameMaster object
-    game_master = GameMaster()
+    # creating the arrow_sprites sprite group and adding all 4 arrow sprite groups. This group is used for easier control of all arrow sprites.
+    enemy_arrow_sprites = pygame.sprite.Group()
+    enemy_arrow_sprites.add(
+        enemy_left_arrow_sprites, 
+        enemy_right_arrow_sprites, 
+        enemy_up_arrow_sprites, 
+        enemy_down_arrow_sprites
+        )
+
+    # creating the GameMaster objects for player and enemy
+    player_game_master = GameMaster()
+    enemy_game_master = GameMaster()
+    
 
     # creating a ArrowBW object for the left arrow 
     left_arrow_bw = ArrowBW(centerx = arrow_dict[images.left_arrow], 
@@ -116,7 +150,7 @@ if __name__ == "__main__":
         
         # obtaining a dict of all collisions between arrow sprites and their corresponding bw arrow sprites. 
         # Note that the coloured player sprites are not killed upon immediate contact with the BW arrow sprites.
-        collisions = pygame.sprite.groupcollide(arrow_sprites, bw_arrow_sprites, False, False)
+        collisions = pygame.sprite.groupcollide(player_arrow_sprites, bw_arrow_sprites, False, False)
 
         # for loop iterating through each event in this instance of pygame
         for event in pygame.event.get():
@@ -130,113 +164,199 @@ if __name__ == "__main__":
                 # if statement checking if the detected keydown is the button "1"
                 if event.key == pygame.K_1:
                     # if so, the game_master starts
-                    game_master.start = True
+                    player_game_master.start = True
+
+                    # setting the round start timestamp
+                    player_game_master.round_start = pygame.time.get_ticks()
 
                     # player no longer in idle mode
                     player.idle = False
 
+                    player_turn = True
+
                 if event.key == pygame.K_2:
-                    game_master.start = False
+                    player_game_master.start = False
 
                 if event.key == pygame.K_UP:
                     player.attack()
                     up_fail = True
-                    for arrow in up_arrow_sprites.sprites():
-                        if arrow in collisions:
-                            up_arrow_bw.score()
-                            arrow.kill()
-                            player_healthbar.gain_health()
-                            up_fail = False
-                            break
-                    if up_fail:
-                        up_arrow_bw.fail()
-                        player_healthbar.lose_health()
+                    if player_turn:
+                        for arrow in player_up_arrow_sprites.sprites():
+                            if arrow in collisions:
+                                up_arrow_bw.score()
+                                arrow.kill()
+                                player_healthbar.gain_health()
+                                up_fail = False
+                                break
+                        if up_fail:
+                            up_arrow_bw.fail()
+                            player_healthbar.lose_health()
 
                 if event.key == pygame.K_DOWN:
                     player.attack()
                     down_fail = True
-                    for arrow in down_arrow_sprites.sprites():
-                        if arrow in collisions:
-                            down_arrow_bw.score()
-                            arrow.kill()
-                            player_healthbar.gain_health()
-                            down_fail = False
-                            break
-                    if down_fail:
-                        down_arrow_bw.fail()
-                        player_healthbar.lose_health()
+                    if player_turn:
+                        for arrow in player_down_arrow_sprites.sprites():
+                            if arrow in collisions:
+                                down_arrow_bw.score()
+                                arrow.kill()
+                                player_healthbar.gain_health()
+                                down_fail = False
+                                break
+                        if down_fail:
+                            down_arrow_bw.fail()
+                            player_healthbar.lose_health()
 
                 if event.key == pygame.K_LEFT:
                     player.attack()
                     left_fail = True
-                    for arrow in left_arrow_sprites.sprites():
-                        if arrow in collisions:
-                            left_arrow_bw.score()
-                            arrow.kill()
-                            player_healthbar.gain_health()
-                            left_fail = False
-                            break
-                    if left_fail:
-                        left_arrow_bw.fail()
-                        player_healthbar.lose_health()
+                    if player_turn:
+                        for arrow in player_left_arrow_sprites.sprites():
+                            if arrow in collisions:
+                                left_arrow_bw.score()
+                                arrow.kill()
+                                player_healthbar.gain_health()
+                                left_fail = False
+                                break
+                        if left_fail:
+                            left_arrow_bw.fail()
+                            player_healthbar.lose_health()
 
                 if event.key == pygame.K_RIGHT:
                     player.attack()
                     right_fail = True
-                    for arrow in right_arrow_sprites.sprites():
-                        if arrow in collisions:
-                            right_arrow_bw.score()
-                            arrow.kill()
-                            player_healthbar.gain_health()
-                            right_fail = False
-                            break
-                    if right_fail:
-                        right_arrow_bw.fail()
-                        player_healthbar.lose_health()
+                    if player_turn:
+                        for arrow in player_right_arrow_sprites.sprites():
+                            if arrow in collisions:
+                                right_arrow_bw.score()
+                                arrow.kill()
+                                player_healthbar.gain_health()
+                                right_fail = False
+                                break
+                        if right_fail:
+                            right_arrow_bw.fail()
+                            player_healthbar.lose_health()
 
         # Case where a right arrow has aligned completely with the right arrow bw and has not been pressed by the player. 
-        for arrow in right_arrow_sprites:
+        for arrow in player_right_arrow_sprites:
             if arrow.rect.bottom <= HEIGHT/2:
-                if arrow in collisions:
-                    arrow.kill()
+                right_arrow_bw.fail()
+                player_healthbar.lose_health()
+        
+        for arrow in player_left_arrow_sprites:
+            if arrow.rect.bottom <= HEIGHT/2:
+                left_arrow_bw.fail()
+                player_healthbar.lose_health()
+        
+        for arrow in player_up_arrow_sprites:
+            if arrow.rect.bottom <= HEIGHT/2:
+                up_arrow_bw.fail()
+                player_healthbar.lose_health()
+    
+        for arrow in player_down_arrow_sprites:
+            if arrow.rect.bottom <= HEIGHT/2:
+                down_arrow_bw.fail()
+                player_healthbar.lose_health()
+        
+        ## Game logic for enemy arrow sprites
+
+        enemy_success = enemy_game_master.enemy_success()
+
+        for arrow in enemy_right_arrow_sprites:
+            if arrow.rect.bottom <= HEIGHT/2:
+                if enemy_success:
+                    right_arrow_bw.score()
+                else:
                     right_arrow_bw.fail()
-                    player_healthbar.lose_health()
+                    player_healthbar.gain_health()
         
-        for arrow in left_arrow_sprites:
+        for arrow in enemy_left_arrow_sprites:
             if arrow.rect.bottom <= HEIGHT/2:
-                if arrow in collisions:
-                    arrow.kill()
+                if enemy_success:
+                    left_arrow_bw.score()
+                else:
                     left_arrow_bw.fail()
-                    player_healthbar.lose_health()
+                    player_healthbar.gain_health()
         
-        for arrow in up_arrow_sprites:
+        for arrow in enemy_up_arrow_sprites:
             if arrow.rect.bottom <= HEIGHT/2:
-                if arrow in collisions:
-                    arrow.kill()
+                if enemy_success:
+                    up_arrow_bw.score()
+                else:
                     up_arrow_bw.fail()
-                    player_healthbar.lose_health()
-        
-        for arrow in down_arrow_sprites:
+                    player_healthbar.gain_health()
+    
+        for arrow in enemy_down_arrow_sprites:
             if arrow.rect.bottom <= HEIGHT/2:
-                if arrow in collisions:
-                    arrow.kill()
+                if enemy_success:
+                    down_arrow_bw.score()
+                else:
                     down_arrow_bw.fail()
-                    player_healthbar.lose_health()
+                    player_healthbar.gain_health()
+
+                 
+        if not enemy_turn:
+            enemy_turn = player_game_master.switch_player()
+            
+            if enemy_turn:
+                enemy_game_master.start = True
+                enemy_game_master.round_start = pygame.time.get_ticks()
+
+        if not player_turn:
+            player_turn = enemy_game_master.switch_player()
+
+            if player_turn:
+                player_game_master.start = True
+                player_game_master.round_start = pygame.time.get_ticks()
         
-        # choosing arrows 
-        arrow = game_master.choose_next_arrow()
+        if player_turn:
+            # choosing arrows
+            arrow = player_game_master.choose_next_arrow()
+            
+            # adding arrow to the respective sprite groups
+            if arrow != None:
+                arrow_direction = arrow.arrow_dir.lower()
+                match arrow_direction:
+                    case "up":
+                        player_up_arrow_sprites.add(arrow)
+                    case "down":
+                        player_down_arrow_sprites.add(arrow)
+                    case "left":
+                        player_left_arrow_sprites.add(arrow)
+                    case "right":
+                        player_right_arrow_sprites.add(arrow)
+                player_arrow_sprites.add(arrow)
+                    
+        if enemy_turn:
+            arrow = enemy_game_master.choose_next_arrow()
+            
+            if arrow != None:
+                arrow_direction = arrow.arrow_dir.lower()
+                match arrow_direction:
+                    case "up":
+                        enemy_up_arrow_sprites.add(arrow)
+                    case "down":
+                        enemy_down_arrow_sprites.add(arrow)
+                    case "left":
+                        enemy_left_arrow_sprites.add(arrow)
+                    case "right":
+                        enemy_right_arrow_sprites.add(arrow)
+                enemy_arrow_sprites.add(arrow)
+           
+
+        if len(player_arrow_sprites.sprites()) > 0:
+            player_turn = True
+        else:
+            player_turn = False
         
-        # adding arrow to the respective sprite groups
-        if arrow != None:
-            if str(arrow.arrow_dir) == str(images.up_arrow):
-                up_arrow_sprites.add(arrow)
-            elif str(arrow.arrow_dir) == str(images.down_arrow):
-                down_arrow_sprites.add(arrow)
-            elif str(arrow.arrow_dir) == str(images.left_arrow):
-                left_arrow_sprites.add(arrow)
-            else:
-                right_arrow_sprites.add(arrow)
-            arrow_sprites.add(arrow)
+        if player_healthbar.width <= 0:
+            player.lose()
+            game_over = True
+
+        if len(enemy_arrow_sprites.sprites()) > 0:
+            enemy_turn = True
+        else:
+            enemy_turn = False
         
         if player_healthbar.width <= 0:
             player.lose()
@@ -245,7 +365,8 @@ if __name__ == "__main__":
         """Update"""
         if game_over == False:
             base_game_sprites.update()
-            arrow_sprites.update()
+            player_arrow_sprites.update()
+            enemy_arrow_sprites.update()
         bw_arrow_sprites.update()
 
         """Drawing/Rendering"""
@@ -256,7 +377,8 @@ if __name__ == "__main__":
         """Blit the sprites images"""
         base_game_sprites.draw(screen)
         bw_arrow_sprites.draw(screen)
-        arrow_sprites.draw(screen)
+        player_arrow_sprites.draw(screen)
+        enemy_arrow_sprites.draw(screen)
 
         if game_over:
             font = pygame.font.SysFont(None, 72)
