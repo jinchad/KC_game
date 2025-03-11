@@ -1,6 +1,6 @@
 import pygame
 from os import path
-img_dir = path.join(path.dirname(__file__), 'resources')
+img_dir = path.abspath(path.join(path.dirname(__file__), '../resources'))
 file_type = ".png"
 
 PLAYER_IDLE_1 = "OnslaughtIdle1"

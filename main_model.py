@@ -1,6 +1,6 @@
 import pygame
 import random
-from load_img import LoadImage
+from helper.load_img import LoadImage
 
 WIDTH = 480
 HEIGHT = 600
