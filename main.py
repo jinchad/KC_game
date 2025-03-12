@@ -9,6 +9,7 @@ load_dotenv()
 WIDTH = int(os.getenv("WIDTH", 400))
 HEIGHT = int(os.getenv("HEIGHT", 600))
 FPS = int(os.getenv("FPS", 60))
+MAX_HP_BAR_LENGTH = WIDTH * 2/3
 
 BLACK = (0,0,0)
 RED = (255,0,0)
@@ -31,10 +32,10 @@ images.load_images()
 
 """Arrow dictionary containing x coordinates"""
 arrow_dict = {
-    images.left_arrow : WIDTH/5,
-    images.right_arrow : 4*WIDTH/5,
-    images.up_arrow : 2*WIDTH/5,
-    images.down_arrow : 3*WIDTH/5
+    "left" : WIDTH/5,
+    "right" : 4*WIDTH/5,
+    "up" : 2*WIDTH/5,
+    "down" : 3*WIDTH/5
 }
 
 """Set speed of the game"""
@@ -102,30 +103,30 @@ if __name__ == "__main__":
         )
 
     # creating the GameMaster objects for player and enemy
-    player_game_master = GameMaster()
-    enemy_game_master = GameMaster()
+    player_game_master = GameMaster(is_player=True)
+    enemy_game_master = GameMaster(is_player=False)
     
 
     # creating a ArrowBW object for the left arrow 
-    left_arrow_bw = ArrowBW(centerx = arrow_dict[images.left_arrow], 
+    left_arrow_bw = ArrowBW(centerx = arrow_dict["left"], 
                             image = images.left_arrow_bw, 
                             hit_image=images.left_arrow_hit, 
                             miss_image=images.left_arrow_miss)
 
     # creating a ArrowBW object for the right arrow
-    right_arrow_bw = ArrowBW(centerx = arrow_dict[images.right_arrow], 
+    right_arrow_bw = ArrowBW(centerx = arrow_dict["right"], 
                             image = images.right_arrow_bw,
                             hit_image=images.right_arrow_hit, 
                             miss_image=images.right_arrow_miss)
 
     # creating a ArrowBW object for the up arrow
-    up_arrow_bw = ArrowBW(centerx = arrow_dict[images.up_arrow], 
+    up_arrow_bw = ArrowBW(centerx = arrow_dict["up"], 
                         image = images.up_arrow_bw, 
                         hit_image=images.up_arrow_hit, 
                         miss_image=images.up_arrow_miss)
 
     # creating a ArrowBW object for the down arrow
-    down_arrow_bw = ArrowBW(centerx = arrow_dict[images.down_arrow], 
+    down_arrow_bw = ArrowBW(centerx = arrow_dict["down"], 
                             image = images.down_arrow_bw, 
                             hit_image=images.down_arrow_hit, 
                             miss_image=images.down_arrow_miss)
@@ -139,8 +140,11 @@ if __name__ == "__main__":
     # boolean value indicating that the game is running 
     running = True
 
-    # boolean value indicating if the player has lost
+    # boolean value indicating if the game is over
     game_over = False
+
+    # boolean value indicating if the player has lost
+    player_lost = False
 
     # while loop the runs indefinitely until the game is stopped
     while running:
@@ -162,7 +166,7 @@ if __name__ == "__main__":
             if event.type == pygame.KEYDOWN:
                 
                 # if statement checking if the detected keydown is the button "1"
-                if event.key == pygame.K_1:
+                if event.key == pygame.K_1 and not game_over:
                     # if so, the game_master starts
                     player_game_master.start = True
 
@@ -174,7 +178,7 @@ if __name__ == "__main__":
 
                     player_turn = True
 
-                if event.key == pygame.K_2:
+                if event.key == pygame.K_2 and not game_over:
                     player_game_master.start = False
 
                 if event.key == pygame.K_UP:
@@ -264,45 +268,49 @@ if __name__ == "__main__":
 
         for arrow in enemy_right_arrow_sprites:
             if arrow.rect.bottom <= HEIGHT/2:
+                enemy.attack()
                 if enemy_success:
                     right_arrow_bw.score()
+                    player_healthbar.enemy_score()
                 else:
                     right_arrow_bw.fail()
-                    player_healthbar.gain_health()
         
         for arrow in enemy_left_arrow_sprites:
             if arrow.rect.bottom <= HEIGHT/2:
+                enemy.attack()
                 if enemy_success:
                     left_arrow_bw.score()
+                    player_healthbar.enemy_score()
                 else:
                     left_arrow_bw.fail()
-                    player_healthbar.gain_health()
         
         for arrow in enemy_up_arrow_sprites:
             if arrow.rect.bottom <= HEIGHT/2:
+                enemy.attack()
                 if enemy_success:
                     up_arrow_bw.score()
+                    player_healthbar.enemy_score()
                 else:
                     up_arrow_bw.fail()
-                    player_healthbar.gain_health()
     
         for arrow in enemy_down_arrow_sprites:
             if arrow.rect.bottom <= HEIGHT/2:
+                enemy.attack()
                 if enemy_success:
                     down_arrow_bw.score()
+                    player_healthbar.enemy_score()
                 else:
                     down_arrow_bw.fail()
-                    player_healthbar.gain_health()
 
                  
-        if not enemy_turn:
+        if not enemy_turn and not game_over:
             enemy_turn = player_game_master.switch_player()
             
             if enemy_turn:
                 enemy_game_master.start = True
                 enemy_game_master.round_start = pygame.time.get_ticks()
 
-        if not player_turn:
+        if not player_turn and not game_over:
             player_turn = enemy_game_master.switch_player()
 
             if player_turn:
@@ -342,16 +350,11 @@ if __name__ == "__main__":
                     case "right":
                         enemy_right_arrow_sprites.add(arrow)
                 enemy_arrow_sprites.add(arrow)
-           
 
         if len(player_arrow_sprites.sprites()) > 0:
             player_turn = True
         else:
             player_turn = False
-        
-        if player_healthbar.width <= 0:
-            player.lose()
-            game_over = True
 
         if len(enemy_arrow_sprites.sprites()) > 0:
             enemy_turn = True
@@ -361,6 +364,13 @@ if __name__ == "__main__":
         if player_healthbar.width <= 0:
             player.lose()
             game_over = True
+            player_lost = True
+        elif player_healthbar.width >= MAX_HP_BAR_LENGTH:
+            if not enemy_turn and player_turn:
+                enemy.lose()
+                game_over = True
+                player_lost = False
+            
 
         """Update"""
         if game_over == False:
@@ -381,10 +391,16 @@ if __name__ == "__main__":
         enemy_arrow_sprites.draw(screen)
 
         if game_over:
-            font = pygame.font.SysFont(None, 72)
-            text_surface = font.render("GAME OVER", True, RED)
+            font = pygame.font.SysFont(None, 64)
+            if player_lost:
+                text_surface = font.render("YOU LOSE", True, RED)
+            else:
+                text_surface = font.render("YOU WIN", True, RED)
             text_rect = text_surface.get_rect(center=(WIDTH / 2, HEIGHT / 4))
             screen.blit(text_surface, text_rect)
+            enemy_game_master.start = False
+            player_game_master.start = False
+    
         pygame.display.flip()
 
     """Close the game"""

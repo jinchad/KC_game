@@ -15,10 +15,15 @@ ENEMY_LOSE = "DKdead"
 ENEMY_ATTACK_1 = "DKattack1"
 ENEMY_ATTACK_2 = "DKattack2"
 
-LEFT_ARROW = "LeftArrow"
-RIGHT_ARROW = "RightArrow"
-DOWN_ARROW = "DownArrow"
-UP_ARROW = "UpArrow"
+LEFT_ARROW_PLAYER = "LeftArrowPlayer"
+RIGHT_ARROW_PLAYER = "RightArrowPlayer"
+DOWN_ARROW_PLAYER = "DownArrowPlayer"
+UP_ARROW_PLAYER = "UpArrowPlayer"
+
+LEFT_ARROW_ENEMY = "LeftArrowEnemy"
+RIGHT_ARROW_ENEMY = "RightArrowEnemy"
+DOWN_ARROW_ENEMY = "DownArrowEnemy"
+UP_ARROW_ENEMY = "UpArrowEnemy"
 
 LEFT_ARROW_BW = "LeftArrowBW"
 RIGHT_ARROW_BW = "RightArrowBW"
@@ -55,10 +60,15 @@ class LoadImage:
         self.enemy_lose = pygame.image.load(path.join(enemy_dir, ENEMY_LOSE + file_type)).convert_alpha()
 
         arrow_dir = path.join(img_dir, "arrow sprites")
-        self.left_arrow = pygame.image.load(path.join(arrow_dir, LEFT_ARROW + file_type)).convert_alpha()
-        self.right_arrow = pygame.image.load(path.join(arrow_dir, RIGHT_ARROW + file_type)).convert_alpha()
-        self.down_arrow = pygame.image.load(path.join(arrow_dir, DOWN_ARROW + file_type)).convert_alpha()
-        self.up_arrow = pygame.image.load(path.join(arrow_dir, UP_ARROW + file_type)).convert_alpha()
+        self.left_arrow_player = pygame.image.load(path.join(arrow_dir, LEFT_ARROW_PLAYER + file_type)).convert_alpha()
+        self.right_arrow_player = pygame.image.load(path.join(arrow_dir, RIGHT_ARROW_PLAYER + file_type)).convert_alpha()
+        self.down_arrow_player = pygame.image.load(path.join(arrow_dir, DOWN_ARROW_PLAYER + file_type)).convert_alpha()
+        self.up_arrow_player = pygame.image.load(path.join(arrow_dir, UP_ARROW_PLAYER + file_type)).convert_alpha()
+
+        self.left_arrow_enemy = pygame.image.load(path.join(arrow_dir, LEFT_ARROW_ENEMY + file_type)).convert_alpha()
+        self.right_arrow_enemy = pygame.image.load(path.join(arrow_dir, RIGHT_ARROW_ENEMY + file_type)).convert_alpha()
+        self.down_arrow_enemy = pygame.image.load(path.join(arrow_dir, DOWN_ARROW_ENEMY + file_type)).convert_alpha()
+        self.up_arrow_enemy = pygame.image.load(path.join(arrow_dir, UP_ARROW_ENEMY + file_type)).convert_alpha()
 
         self.left_arrow_bw = pygame.image.load(path.join(arrow_dir, LEFT_ARROW_BW +file_type)).convert_alpha()
         self.right_arrow_bw = pygame.image.load(path.join(arrow_dir, RIGHT_ARROW_BW + file_type)).convert_alpha()

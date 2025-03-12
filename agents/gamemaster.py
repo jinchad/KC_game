@@ -12,7 +12,7 @@ load_dotenv()
 
 WIDTH = int(os.getenv("WIDTH", 400))
 ARROW_INTERVAL = 500
-ROUND_DURATION = ARROW_INTERVAL*8
+ROUND_DURATION = ARROW_INTERVAL*20
 PLAYER_INTERVAL = 2000
 GAME_DIFFICULTY = os.getenv("GAME_DIFFICULTY", "easy")
 
@@ -22,36 +22,35 @@ images.load_images()
 
 """Arrow dictionary containing x coordinates"""
 arrow_dict = {
-    "left": (images.left_arrow, WIDTH/5),
-    "right": (images.right_arrow, 4*WIDTH/5),
-    "up": (images.up_arrow, 2*WIDTH/5),
-    "down": (images.down_arrow, 3*WIDTH/5)
+    "left": (images.left_arrow_player, images.left_arrow_enemy, WIDTH/5),
+    "right": (images.right_arrow_player, images.right_arrow_enemy, 4*WIDTH/5),
+    "up": (images.up_arrow_player, images.up_arrow_enemy, 2*WIDTH/5),
+    "down": (images.down_arrow_player, images.down_arrow_enemy, 3*WIDTH/5)
 }
 
 class GameMaster:
     """
     The GameMaster class is used to decide when and which arrows to send out in game.
 
+    Args:
+        is_player (bool): boolean value indicating if the gamemaster object is for player or for enemy
+
     Attributes:
         last_arrow (int): stores the time stamp of the last arrow that has been sent out
         arrow_intervals (int): determines the time difference between each arrow in milliseconds
-        arrow_choices (List[Surface]): stores the four possible arrow choices that are pygame Surfaces
         start (bool): determines if the game has started, which determines if the arrows should start sending out
+        is_player (bool): boolean value indicating if the gamemaster object is for player or for enemy
     """
-    def __init__(self):
+
+    def __init__(self, is_player: str):
         self.last_arrow = pygame.time.get_ticks()
         self.arrow_intervals = 500
-        self.arrow_choices = [
-            images.up_arrow, 
-            images.down_arrow, 
-            images.left_arrow, 
-            images.right_arrow
-            ]
         
         self.round_start = None
         self.round_duration = ROUND_DURATION
         self.player_interval = PLAYER_INTERVAL
         self.start = False
+        self.is_player = is_player
 
         self.player_end = 0
 
@@ -59,7 +58,7 @@ class GameMaster:
         """
         The choose_next_arrow() method is used to decide which arrow to send out next.
 
-        This is done through using the random.choice which randomly decides which arrow to send out from arrow_choices
+        This is done through using the random.choice which randomly decides which arrow to send out from arrow_dict
 
         Args:
             None
@@ -87,7 +86,10 @@ class GameMaster:
             self.last_arrow = curr_time
 
             # returning an Arrow class with the correct sprite and x coordinate
-            return Arrow(arrow_dir= next_arrow, image = arrow_dict[next_arrow][0], centerx= arrow_dict[next_arrow][1])
+            if self.is_player:
+                return Arrow(arrow_dir= next_arrow, image = arrow_dict[next_arrow][0], centerx= arrow_dict[next_arrow][2])
+            else:
+                return Arrow(arrow_dir= next_arrow, image = arrow_dict[next_arrow][1], centerx= arrow_dict[next_arrow][2])
         else:
             # returns none if it's not yet time to send out the next arrow
             return None

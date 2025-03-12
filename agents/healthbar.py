@@ -93,7 +93,7 @@ class GreenHealthBar(HealthBar):
     
     def lose_health(self):
         """
-        This function is used when a player loses hp.
+        This function is used when a player loses hp due to missing an arrow.
 
         The scale of healthbar reduction is dependent on the percentage loss attribute.
 
@@ -132,6 +132,30 @@ class GreenHealthBar(HealthBar):
 
         # taking the minimum between the new width of the health bar and the maximum possible length of the healthbar
         self.width = min(self.width, MAX_HP_BAR_LENGTH)
+
+        # recreating the healthbar as a pygame Surface 
+        self.image = pygame.Surface((self.width, self.height))
+
+        # filling the pygame Surface with the color
+        self.image.fill(self.color)
+    
+    def enemy_score(self):
+        """
+        This function is used when a player loses hp due to enemy scoring.
+
+        The scale of healthbar reduction is dependent on the percentage loss attribute.
+
+        Args:
+            None
+
+        Return:
+            None        
+        """
+        # reducing the width of the health bar
+        self.width -= MAX_HP_BAR_LENGTH/10/self.percentage_loss
+
+        # taking the maximum between 0 and the width of the health bar. This ensures that the width of the health bar does not drop below 0. 
+        self.width = max(self.width, 0)
 
         # recreating the healthbar as a pygame Surface 
         self.image = pygame.Surface((self.width, self.height))

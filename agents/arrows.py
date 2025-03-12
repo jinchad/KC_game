@@ -35,7 +35,7 @@ class Arrow(pygame.sprite.Sprite):
         arrow_dir (Surface): Pygame Surface determining the direction of the arrow. This is used to determine what to do with the sprite in the game. 
     """
 
-    def __init__(self, centerx = WIDTH/4, image = images.up_arrow, arrow_dir: str = "up"):
+    def __init__(self, centerx = WIDTH/4, image = images.up_arrow_player, arrow_dir: str = "up"):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.transform.scale(image, (50, 50))
 
@@ -76,7 +76,7 @@ class ArrowBW(Arrow):
         hit_image (Surface): This is a pygame surface that determines the hit image of the arrow
         miss_image (Surface): This is a pygame surface that determines the miss image of the arrow
 
-    Attributes
+    Attributes:
         idle (Surface): Pygame Surface that is the arrow sprite image
         hit (Surface): Pygame Surface that is the arrow sprite hit image
         miss (Surface): Pygame Surface that is the arrow sprite miss image
