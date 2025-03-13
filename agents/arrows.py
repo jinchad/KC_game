@@ -6,13 +6,12 @@ import pygame
 from dotenv import load_dotenv
 from helper.load_img import LoadImage
 
-# Loading .env file
+# loading width and height of pygame from .env
 load_dotenv()
-
 WIDTH = int(os.getenv("WIDTH", 400))
 HEIGHT = int(os.getenv("HEIGHT", 600))
 
-"""Loading in images"""
+# loading in images
 images = LoadImage()
 images.load_images()
 
@@ -29,22 +28,24 @@ class Arrow(pygame.sprite.Sprite):
     Attributes:
         image (Surface): Pygame Surface that is the arrow sprite image
         rect (Rect): Pygame Rect object that is converted from the arrow sprite image
-        rect.centerx (float): Float determining the x coordinate of the center of the arrow sprite
-        rect/bottom (int): Integer determining the y coordinate of the bottom of the sprite
         speedy (int): Integer determining the speed of the arrow as it ascends in the screen
         arrow_dir (Surface): Pygame Surface determining the direction of the arrow. This is used to determine what to do with the sprite in the game. 
     """
 
     def __init__(self, centerx = WIDTH/4, image = images.up_arrow_player, arrow_dir: str = "up"):
         pygame.sprite.Sprite.__init__(self)
+
         self.image = pygame.transform.scale(image, (50, 50))
-
         self.rect = self.image.get_rect()
-        self.rect.centerx = centerx
-        self.rect.bottom = HEIGHT - 10
         self.speedy = 3
-
         self.arrow_dir = arrow_dir
+
+        # setting the center x coordinate of the image rect to centerx input
+        self.rect.centerx = centerx
+
+        # setting the bottom y coordinate 
+        self.rect.bottom = HEIGHT - 10
+
     
     def update(self):
         """
@@ -155,9 +156,25 @@ class ArrowBW(Arrow):
         self.last_arrow_hit = curr_time
 
     def fail(self):
+        """
+        This method is used to change the BW arrow sprite to a fail sprite, indicating a failed goal
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+        # obtaining the current timestamp
         curr_time = pygame.time.get_ticks()
+
+        # setting the image of the arrow sprite to "miss"
         self.image = self.miss
+
+        # updating arrow_miss to True as the sprite is now in the "miss" status
         self.arrow_miss = True
+
+        # updating the last arrow miss line
         self.last_arrow_miss = curr_time
 
         

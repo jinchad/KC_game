@@ -8,19 +8,46 @@ import random
 from agents.arrows import Arrow
 from dotenv import load_dotenv
 
+# initializing width and game difficiulty variables stored in .env
 load_dotenv()
-
 WIDTH = int(os.getenv("WIDTH", 400))
-ARROW_INTERVAL = 500
-ROUND_DURATION = ARROW_INTERVAL*20
-PLAYER_INTERVAL = 2000
-GAME_DIFFICULTY = os.getenv("GAME_DIFFICULTY", "easy")
+GAME_DIFFICULTY = os.getenv("GAME_DIFFICULTY", "easy") # directly influences the amount of HP lost/gained throughout the game
 
-"""Loading in images"""
+# match case setting the appropriate difficulty dict that contains the variables affecting game difficulty
+match GAME_DIFFICULTY:
+    case "easy": 
+        difficulty_dict = {
+            "arrow interval":  500, # arrows come in intervals of 500 milliseconds
+            "enemy success probability": 0.3 # enemy's probability of success is 1-0.3 = 0.7
+        }
+    case "medium":
+        difficulty_dict = {
+            "arrow interval":  450, # arrows come in intervals of 450 milliseconds
+            "enemy success probability": 0.2 # enemy's probability of success is 1-0.2 = 0.8
+        }
+    case "hard":
+        difficulty_dict = {
+            "arrow interval":  400, # arrows come in intervals of 400 milliseconds
+            "enemy success probability": 0.1 # enemy's probability of success is 1-0.1 = 0.9
+        }
+    case "extreme":
+        difficulty_dict = {
+            "arrow interval":  300, # arrows come in intervals of 300 milliseconds
+            "enemy success probability": 0.05 # enemy's probability of success is 1-0.05 = 0.95
+        }
+
+# duration of a round for player/bot is set to 20 arrows
+ROUND_DURATION = difficulty_dict["arrow interval"]*20
+
+# interval between each switch over, which is 2000 milliseconds
+PLAYER_INTERVAL = 2000
+
+# loading images 
 images = LoadImage()
 images.load_images()
 
-"""Arrow dictionary containing x coordinates"""
+# arrow dictionary containing a tuple, which contains the image sprite for player's arrow, image sprite for enemy's arrow, and x coordinate of the arrow
+# each tuple is stored based on keys for each of the 4 arrow keys.
 arrow_dict = {
     "left": (images.left_arrow_player, images.left_arrow_enemy, WIDTH/5),
     "right": (images.right_arrow_player, images.right_arrow_enemy, 4*WIDTH/5),
@@ -30,28 +57,25 @@ arrow_dict = {
 
 class GameMaster:
     """
-    The GameMaster class is used to decide when and which arrows to send out in game.
+    The GameMaster class is used to decide when and which arrows to send out in game. 
+    
+    In this class, the term "player" is used loosely as a gamemaster object is used to control the gameplay for both enemy and player sprites.
 
     Args:
-        is_player (bool): boolean value indicating if the gamemaster object is for player or for enemy
+        is_player (bool): boolean value indicating if the gamemaster object is for player or for enemy. This directly influences the type of arrow being sent out.
 
     Attributes:
         last_arrow (int): stores the time stamp of the last arrow that has been sent out
-        arrow_intervals (int): determines the time difference between each arrow in milliseconds
-        start (bool): determines if the game has started, which determines if the arrows should start sending out
+        round_start (int | None): stores the timestamp of the start of the game
+        start (bool): determines if the game has started. If True, arrows will start being sent out
         is_player (bool): boolean value indicating if the gamemaster object is for player or for enemy
+        player_end (int): integer indicating the timestamp in which the player's round has ended. This is used to determine if it's time for the opponent sprite to start.
     """
-
     def __init__(self, is_player: str):
         self.last_arrow = pygame.time.get_ticks()
-        self.arrow_intervals = 500
-        
         self.round_start = None
-        self.round_duration = ROUND_DURATION
-        self.player_interval = PLAYER_INTERVAL
         self.start = False
         self.is_player = is_player
-
         self.player_end = 0
 
     def choose_next_arrow(self):
@@ -73,12 +97,22 @@ class GameMaster:
         curr_time = pygame.time.get_ticks()
 
         # if statement checking if the time difference between the current timestamp and the last arrow timestamp exceeds the arrow interval time stamp and if self.start is True
-        if curr_time-self.last_arrow > self.arrow_intervals and self.start:
+        if curr_time-self.last_arrow > difficulty_dict["arrow interval"] and self.start:
+
+            # if statement checking if this player's round has exceeded the set duration of a single round. This logic helps decide when it's time for the gamemaster to stop.
             if curr_time - self.round_start >= ROUND_DURATION:
+                # gamemaster is stopping
                 self.start = False
+
+                # round_start is set to None again as this player's round has ended
                 self.round_start = None
+
+                # set the player_end timestamp to the current time stamp
                 self.player_end = curr_time
+
+                # returning None as no arrows have been sent out
                 return None
+            
             # choosing a random arrow from the 4 choices
             next_arrow = random.choice(list(arrow_dict.keys()))
 
@@ -95,25 +129,63 @@ class GameMaster:
             return None
     
     def switch_player(self):
+        """
+        This method is used to determine if it's time to switch player turns.
+
+        Args:
+            None
+        
+        Returns:
+            True if it's time to switch player turn
+            False otherwise
+        """
+        # obtaining the current game timestamp
         curr_time = pygame.time.get_ticks()
+
+        # if statement checking if there is any timestamp stored under player_end
         if self.player_end:
-            if curr_time - self.player_end >= self.player_interval:
+            # if statement that then checks if sufficient time has passed between the timestamp of the player's end and the current timestamp
+            if curr_time - self.player_end >= PLAYER_INTERVAL:
+                # sets player_end to None as it's no longer the player's turn and it has moved to the opponents
                 self.player_end = None
+
+                # return True as it is time to swap turns to the other player 
                 return True 
+            
+            # returns False as even though the current player's turn has ended, insufficient time has passed for the other player to start
+            return False
+        
+        # returns False as it's still the current player's turn
         return False
 
     def enemy_success(self):
-        enemy_chance = random.random()
+        """
+        This method is used to determine if a enemy (bot) has succeeded in choosing the correct arrow. 
 
-        match GAME_DIFFICULTY:
-            case "easy":
-                return True if enemy_chance >= 0.3 else False
-            case "medium":
-                return True if enemy_chance >= 0.2 else False
-            case "hard":
-                return True if enemy_chance >= 0.1 else False
-            case "extreme":
-                return True if enemy_chance >= 0.05 else False
+        This method is used exclusively by gamemaster that is controlling the enemy sprite.
+
+        Args:
+            None
+        
+        Returns:
+            if bot succeeds:
+                return True 
+            else:
+                return False
+        """
+        # if statement checking if the gamemaster is controlling a bot
+        if not self.is_player:
+            # obtaining the enemy's chance for success
+            enemy_chance = random.random()
+
+            # obtaining the enemy's probability of success based on the game's difficulty setting
+            enemy_success_probability = difficulty_dict["enemy success probability"]
+
+            # returns True if enemy succeeds else False
+            return True if enemy_chance >= enemy_success_probability else False
+        else:
+            # returns False as the gamemaster is not contraolling a plyer
+            return False
 
 
 
