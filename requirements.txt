@@ -1,0 +1,7 @@
+Package       Version
+------------- -------
+dotenv        0.9.9
+pip           23.1.2
+pygame        2.6.1
+python-dotenv 1.0.1
+setuptools    65.5.0

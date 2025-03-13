@@ -12,16 +12,16 @@ WIDTH = int(os.getenv("WIDTH", 400))
 HEIGHT = int(os.getenv("HEIGHT", 600))
 GAME_DIFFICULTY = os.getenv("GAME_DIFFICULTY", "easy").lower() # directly influences the speed of the arrow
 
-# match case that matches the game's difficulty that sets the appropriate arrow speed 
-match GAME_DIFFICULTY:
-    case "easy":
-        ARROW_SPEED = 3
-    case "medium":
-        ARROW_SPEED = 3.5
-    case "hard":
-        ARROW_SPEED = 4
-    case "extreme":
-        ARROW_SPEED = 5
+# dictionary storing the difficulty levels and corresponding arrow speeds
+difficulty_speeds = {
+    "easy": 3,
+    "medium": 3.5,
+    "hard": 4,
+    "extreme": 5
+}
+
+ARROW_SPEED = difficulty_speeds[GAME_DIFFICULTY]
+
 
 # loading in images
 images = LoadImage()

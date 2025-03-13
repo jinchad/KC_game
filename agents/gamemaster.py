@@ -13,28 +13,28 @@ load_dotenv()
 WIDTH = int(os.getenv("WIDTH", 400))
 GAME_DIFFICULTY = os.getenv("GAME_DIFFICULTY", "easy").lower() # directly influences the arrow intervals and the enemy success probability
 
-# match case setting the appropriate difficulty dict that contains the variables affecting game difficulty
-match GAME_DIFFICULTY:
-    case "easy": 
-        difficulty_dict = {
-            "arrow interval":  500, # arrows come in intervals of 500 milliseconds
-            "enemy success probability": 0.3 # enemy's probability of success is 1-0.3 = 0.7
+# game difficulty dict storing the arrow interval and enemy success probability
+game_difficulty = {
+            "easy": {
+                "arrow interval":  500, # arrows come in intervals of 500 milliseconds
+                "enemy success probability": 0.3 # enemy's probability of success is 1-0.3 = 0.7
+            },
+            "medium": {
+                "arrow interval":  450, # arrows come in intervals of 450 milliseconds
+                "enemy success probability": 0.2 # enemy's probability of success is 1-0.2 = 0.8
+            },
+            "hard": {
+                "arrow interval":  400, # arrows come in intervals of 400 milliseconds
+                "enemy success probability": 0.1 # enemy's probability of success is 1-0.1 = 0.9
+            },
+            "extreme": {
+                "arrow interval":  300, # arrows come in intervals of 300 milliseconds
+                "enemy success probability": 0.05 # enemy's probability of success is 1-0.05 = 0.95
+            }
         }
-    case "medium":
-        difficulty_dict = {
-            "arrow interval":  450, # arrows come in intervals of 450 milliseconds
-            "enemy success probability": 0.2 # enemy's probability of success is 1-0.2 = 0.8
-        }
-    case "hard":
-        difficulty_dict = {
-            "arrow interval":  400, # arrows come in intervals of 400 milliseconds
-            "enemy success probability": 0.1 # enemy's probability of success is 1-0.1 = 0.9
-        }
-    case "extreme":
-        difficulty_dict = {
-            "arrow interval":  300, # arrows come in intervals of 300 milliseconds
-            "enemy success probability": 0.05 # enemy's probability of success is 1-0.05 = 0.95
-        }
+
+# obtaining the appropriate game difficulty
+difficulty_dict = game_difficulty[GAME_DIFFICULTY]
 
 # duration of a round for player/bot is set to 20 arrows
 ROUND_DURATION = difficulty_dict["arrow interval"]*20
