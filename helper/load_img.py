@@ -3,6 +3,7 @@ from os import path
 img_dir = path.abspath(path.join(path.dirname(__file__), '../resources'))
 file_type = ".png"
 
+# initializing the constants for the image names. Ensure that the images have a '.png' extension at the end of their file name.
 PLAYER_IDLE_1 = "OnslaughtIdle1"
 PLAYER_IDLE_2 = "OnslaughtIdle2"
 PLAYER_LOSE = "OnslaughtDead"
@@ -41,10 +42,40 @@ DOWN_ARROW_MISS = "DownArrowMiss"
 UP_ARROW_MISS = "UpArrowMiss"
 
 class LoadImage:
+    """
+    This class is used as a helper class that loads in all sprite images from the resources folder.
+
+    A LoadImage object should be created whenever an image sprite is needed from the resources folder.
+
+    Parameters:
+        None
+    """
     def __init__(self):
         pass
 
     def load_images(self):
+        """
+        This method is used to load the images for all image sprites in the resources folder.
+
+        For the sake of simplicity and to avoid unncessary repetition, the doc strings of this method are abbreviated and condensed into their respective categories.
+
+        Player sprites (Surface): 
+            2 idle player sprite images shown when player is idling
+            2 attack player sprite images is attacking
+            1 player sprite lose image when player has lost the game
+
+        Enemy sprites (Surface): 
+            2 idle enemy sprite images shown when enemy is idling
+            2 attack enemy sprite images is attacking
+            1 enemy sprite lose image when enemy has lost the game
+
+        Arrow sprites (Surface):
+            4 player arrow sprites, each representing 1 of the 4 arrow keys for arrows deployed in game for the player
+            4 enemy arrow sprites, each representing 1 of the 4 arrows deployed in game for the enemy
+            4 black and white arrow sprites, each representing 1 of the 4 black and white arrows in game
+            4 hit arrow sprites, each representing 1 of the 4 black and white arrows when they change colour due to a successful hit
+            4 miss arrow sprites, each representing 1 of the 4 black and white arrows when they change colour due to a miss        
+        """
         player_dir = path.join(img_dir, "player sprites")
         self.player_idle_1 = pygame.image.load(path.join(player_dir, PLAYER_IDLE_1 + file_type)).convert_alpha()
         self.player_idle_2 = pygame.image.load(path.join(player_dir, PLAYER_IDLE_2 + file_type)).convert_alpha()
@@ -84,8 +115,6 @@ class LoadImage:
         self.right_arrow_miss = pygame.image.load(path.join(arrow_dir, RIGHT_ARROW_MISS + file_type)).convert_alpha()
         self.down_arrow_miss = pygame.image.load(path.join(arrow_dir, DOWN_ARROW_MISS + file_type)).convert_alpha()
         self.up_arrow_miss = pygame.image.load(path.join(arrow_dir, UP_ARROW_MISS + file_type)).convert_alpha()
-
-
 
 # In main.py (after pygame.init())
 images = LoadImage()
