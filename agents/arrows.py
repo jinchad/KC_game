@@ -6,10 +6,22 @@ import pygame
 from dotenv import load_dotenv
 from helper.load_img import LoadImage
 
-# loading width and height of pygame from .env
+# loading width and height of pygame and game difficulty from .env
 load_dotenv()
 WIDTH = int(os.getenv("WIDTH", 400))
 HEIGHT = int(os.getenv("HEIGHT", 600))
+GAME_DIFFICULTY = os.getenv("GAME_DIFFICULTY", "easy").lower() # directly influences the speed of the arrow
+
+# match case that matches the game's difficulty that sets the appropriate arrow speed 
+match GAME_DIFFICULTY:
+    case "easy":
+        ARROW_SPEED = 3
+    case "medium":
+        ARROW_SPEED = 3.5
+    case "hard":
+        ARROW_SPEED = 4
+    case "extreme":
+        ARROW_SPEED = 5
 
 # loading in images
 images = LoadImage()
@@ -37,7 +49,7 @@ class Arrow(pygame.sprite.Sprite):
 
         self.image = pygame.transform.scale(image, (50, 50))
         self.rect = self.image.get_rect()
-        self.speedy = 3
+        self.speedy = ARROW_SPEED
         self.arrow_dir = arrow_dir
 
         # setting the center x coordinate of the image rect to centerx input
@@ -81,7 +93,6 @@ class ArrowBW(Arrow):
         idle (Surface): Pygame Surface that is the arrow sprite image
         hit (Surface): Pygame Surface that is the arrow sprite hit image
         miss (Surface): Pygame Surface that is the arrow sprite miss image
-        rect.bottom (float): Float determining the y coordinate of the bottom of the sprite
         
         arrow_hit (bool): determines if the arrow sprite is in "hit" status
         last_arrow_hit (int): stores the timestamp of the last arrow "hit"
@@ -94,6 +105,8 @@ class ArrowBW(Arrow):
         self.idle = pygame.transform.scale(image, (50, 50))
         self.hit = pygame.transform.scale(hit_image, (52, 52))
         self.miss = pygame.transform.scale(miss_image, (52, 52))
+
+        # setting the bottom y coordinate of the image rect
         self.rect.bottom = HEIGHT/2
 
         self.arrow_hit = False

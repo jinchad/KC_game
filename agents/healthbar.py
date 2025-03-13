@@ -6,17 +6,42 @@ import pygame
 from dotenv import load_dotenv
 from helper.load_img import LoadImage
 
-# Loading .env file
+# Initializing the width and heigh variables for the pygame display and the game difficulty from the .env
 load_dotenv()
-
 WIDTH = int(os.getenv("WIDTH", 400))
 HEIGHT = int(os.getenv("HEIGHT", 600))
+GAME_DIFFICULTY = os.getenv("GAME_DIFFICULTY", "easy").lower()
+
+# match case for setting the appropriate game difficulty variables
+match GAME_DIFFICULTY:
+    case "easy":
+        difficulty_dict = {
+            "percentage_loss": 40, # percentage loss is an integer that scales inversely with the player's hp loss.
+            "percentage_gain": 20 # percentage gain is an integer that scales inversely with the player's hp gain.
+        }
+    case "medium":
+        difficulty_dict = {
+            "percentage_loss": 30,
+            "percentage_gain": 25
+        }
+    case "hard":
+        difficulty_dict = {
+            "percentage_loss": 20,
+            "percentage_gain": 30
+        }
+    case "extreme":
+        difficulty_dict = {
+            "percentage_loss": 15,
+            "percentage_gain": 40
+        }
+# maximum possible length of the HP bar will be 2/3 that of the display width
 MAX_HP_BAR_LENGTH = WIDTH*2/3
+
+# tuple representing the RGB values of red and green colours
 RED = (255,0,0)
 GREEN = (0,255,0)
-GAME_DIFFICULTY = os.getenv("GAME_DIFFICULTY", "easy")
 
-"""Loading in images"""
+# loading in images
 images = LoadImage()
 images.load_images()
 
@@ -24,7 +49,9 @@ class HealthBar(pygame.sprite.Sprite):
     """
     This class creates a HealthBar object for the player. 
     
-    This healthbar is the red healthbar in the game, representing the lost hp for the player. The size of this healthbar remains constant throughout the game and only the green healthbar, which is placed on top of this healthbar, will have its size reduced.
+    This healthbar is the red healthbar in the game, representing the lost hp for the player. 
+    
+    The size of this healthbar remains constant throughout the game and only the green healthbar, which is placed on top of this healthbar, will have its size reduced.
 
     This is also a child class of the pygame Sprite class.
 
@@ -39,8 +66,6 @@ class HealthBar(pygame.sprite.Sprite):
         color (int): color of the health bar
         image (Surface): pygame Surface object creating the rectangular healthbar
         rect (Rect): pygame Rect object of the healthbar
-        rect.centerx (float): the center x coordinate of the healthbar
-        rect.bottom (float): the bottom y coordinate of the healthbar
 
     """
     def __init__(self, width: int = MAX_HP_BAR_LENGTH, height: int = HEIGHT/30, color: str = RED):
@@ -49,9 +74,15 @@ class HealthBar(pygame.sprite.Sprite):
         self.height = height
         self.color = color
         self.image = pygame.Surface((self.width, self.height))
-        self.image.fill(self.color)
         self.rect = self.image.get_rect()
+
+        # setting the colour of the player's missing hp bar to color. 
+        self.image.fill(self.color)
+
+        # setting center x coordinate of the healthbar to center of the display
         self.rect.centerx = WIDTH/2
+
+        # setting the bottom y coordinate of the image rect to 2/5 of the display height
         self.rect.bottom = HEIGHT*2/5
 
 class GreenHealthBar(HealthBar):
@@ -69,27 +100,12 @@ class GreenHealthBar(HealthBar):
 
     Attributes:
         rect.centerx (float): the center x coordinate of the healthbar
-        percentage_loss (int): integer representing the amount of hp gained/loss each increment/decrement. The hp gained/lost is inversely proportional to the value here
 
-        Kindly refer to attributes documented in the HealthBar class for other attributes pertaining tot his class
+        Kindly refer to attributes documented in the HealthBar class for other attributes pertaining to this class
     """
     def __init__(self, width = MAX_HP_BAR_LENGTH/2, height = HEIGHT / 30, color = GREEN):
         super().__init__(width, height, color)
         self.rect.centerx = WIDTH/2 - width/2
-        match GAME_DIFFICULTY:
-            case "easy":
-                self.percentage_loss = 40
-                self.percentage_gain = 20
-            case "medium":
-                self.percentage_loss = 30
-                self.percentage_gain = 25
-            case "hard":
-                self.percentage_loss = 20
-                self.percentage_gain = 30
-            case "extreme":
-                self.percentage_loss = 15
-                self.percentage_gain = 40
-    
     
     def lose_health(self):
         """
@@ -104,7 +120,7 @@ class GreenHealthBar(HealthBar):
             None        
         """
         # reducing the width of the health bar
-        self.width -= MAX_HP_BAR_LENGTH/2/self.percentage_loss
+        self.width -= MAX_HP_BAR_LENGTH/2/difficulty_dict["percentage_loss"]
 
         # taking the maximum between 0 and the width of the health bar. This ensures that the width of the health bar does not drop below 0. 
         self.width = max(self.width, 0)
@@ -128,7 +144,7 @@ class GreenHealthBar(HealthBar):
             None        
         """
         # increasing the width of the health bar
-        self.width += MAX_HP_BAR_LENGTH/2/self.percentage_gain
+        self.width += MAX_HP_BAR_LENGTH/2/difficulty_dict["percentage_gain"]
 
         # taking the minimum between the new width of the health bar and the maximum possible length of the healthbar
         self.width = min(self.width, MAX_HP_BAR_LENGTH)
@@ -145,6 +161,8 @@ class GreenHealthBar(HealthBar):
 
         The scale of healthbar reduction is dependent on the percentage loss attribute.
 
+        A seperate method is used instead of the lose_health() as the penalty from an enemy scoring should be softer than when the player makes a mistake
+
         Args:
             None
 
@@ -152,7 +170,7 @@ class GreenHealthBar(HealthBar):
             None        
         """
         # reducing the width of the health bar
-        self.width -= MAX_HP_BAR_LENGTH/10/self.percentage_loss
+        self.width -= MAX_HP_BAR_LENGTH/10/difficulty_dict["percentage_loss"]
 
         # taking the maximum between 0 and the width of the health bar. This ensures that the width of the health bar does not drop below 0. 
         self.width = max(self.width, 0)

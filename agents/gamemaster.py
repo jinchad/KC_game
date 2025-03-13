@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 # initializing width and game difficiulty variables stored in .env
 load_dotenv()
 WIDTH = int(os.getenv("WIDTH", 400))
-GAME_DIFFICULTY = os.getenv("GAME_DIFFICULTY", "easy") # directly influences the amount of HP lost/gained throughout the game
+GAME_DIFFICULTY = os.getenv("GAME_DIFFICULTY", "easy").lower() # directly influences the arrow intervals and the enemy success probability
 
 # match case setting the appropriate difficulty dict that contains the variables affecting game difficulty
 match GAME_DIFFICULTY:
